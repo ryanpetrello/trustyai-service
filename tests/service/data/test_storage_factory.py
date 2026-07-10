@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from src.service.data.storage import get_storage_interface
+from src.service.data.storage.db.db_storage import DBStorage
 from src.service.data.storage.pvc import PVCStorage
 
 
@@ -24,26 +25,13 @@ class TestGetStorageInterface:
         """Unsupported format raises ValueError."""
         with (
             patch.dict(os.environ, {"SERVICE_STORAGE_FORMAT": "REDIS"}, clear=False),
-            pytest.raises(ValueError, match="not yet supported"),
+            pytest.raises(ValueError, match="Unsupported storage format"),
         ):
             get_storage_interface()
 
-
-@pytest.mark.skipif(
-    not pytest.importorskip("mariadb", reason="mariadb not installed"),
-    reason="mariadb not installed",
-)
-class TestGetStorageInterfaceMariaDB:
-    """Tests for MariaDB storage format routing (requires mariadb package)."""
-
-    @patch(
-        "src.service.data.storage.maria.maria.MariaDBStorage.__init__",
-        return_value=None,
-    )
-    def test_maria_format_creates_mariadb(self, _mock_init: object) -> None:
-        """MARIA format returns MariaDBStorage."""
-        from src.service.data.storage.maria.maria import MariaDBStorage  # noqa: PLC0415
-
+    @patch("src.service.data.storage.db.engine.create_db_engine")
+    def test_maria_format_creates_dbstorage(self, _mock_engine: object) -> None:
+        """MARIA format returns DBStorage."""
         env = {
             "SERVICE_STORAGE_FORMAT": "MARIA",
             "DATABASE_USERNAME": "user",
@@ -54,16 +42,11 @@ class TestGetStorageInterfaceMariaDB:
         }
         with patch.dict(os.environ, env, clear=False):
             storage = get_storage_interface()
-            assert isinstance(storage, MariaDBStorage)
+            assert isinstance(storage, DBStorage)
 
-    @patch(
-        "src.service.data.storage.maria.maria.MariaDBStorage.__init__",
-        return_value=None,
-    )
-    def test_database_format_creates_mariadb(self, _mock_init: object) -> None:
+    @patch("src.service.data.storage.db.engine.create_db_engine")
+    def test_database_format_creates_dbstorage(self, _mock_engine: object) -> None:
         """DATABASE format is accepted as alias for MARIA."""
-        from src.service.data.storage.maria.maria import MariaDBStorage  # noqa: PLC0415
-
         env = {
             "SERVICE_STORAGE_FORMAT": "DATABASE",
             "DATABASE_USERNAME": "user",
@@ -74,4 +57,19 @@ class TestGetStorageInterfaceMariaDB:
         }
         with patch.dict(os.environ, env, clear=False):
             storage = get_storage_interface()
-            assert isinstance(storage, MariaDBStorage)
+            assert isinstance(storage, DBStorage)
+
+    @patch("src.service.data.storage.db.engine.create_db_engine")
+    def test_postgres_format_creates_dbstorage(self, _mock_engine: object) -> None:
+        """POSTGRES format returns DBStorage."""
+        env = {
+            "SERVICE_STORAGE_FORMAT": "POSTGRES",
+            "DATABASE_USERNAME": "user",
+            "DATABASE_PASSWORD": "pass",  # pragma: allowlist secret
+            "DATABASE_HOST": "localhost",
+            "DATABASE_PORT": "5432",
+            "DATABASE_DATABASE": "testdb",
+        }
+        with patch.dict(os.environ, env, clear=False):
+            storage = get_storage_interface()
+            assert isinstance(storage, DBStorage)

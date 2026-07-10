@@ -7,7 +7,7 @@ from collections.abc import Callable, Iterator
 import pytest
 
 CLASSES = [
-    ("src.service.data.storage.maria.maria", "MariaDBStorage"),
+    ("src.service.data.storage.db.db_storage", "DBStorage"),
     ("src.service.data.storage.pvc", "PVCStorage"),
 ]
 

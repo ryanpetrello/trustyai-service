@@ -16,22 +16,9 @@ ARG EXTRAS
 
 USER root
 
-# Install development tools and MariaDB libraries for C extension compilation
-# UBI10 ships MariaDB Connector/C 3.4.4, compatible with Python mariadb >= 1.1
-# Note: UBI10 uses python3.14-devel (version-specific package name)
-RUN if echo "$EXTRAS" | grep -q "mariadb"; then \
-        microdnf install -y \
-            gcc \
-            python3.14-devel \
-            make \
-            mariadb-connector-c-devel && \
-        microdnf clean all; \
-    else \
-        echo "MariaDB extra not requested, installing minimal dev tools for other C extensions" && \
-        microdnf install -y gcc python3.14-devel make && \
-        microdnf clean all && \
-        touch /usr/lib64/libmariadb.so.stub; \
-    fi
+# Install development tools for C extension compilation (e.g., goodpoints)
+RUN microdnf install -y gcc python3.14-devel make && \
+    microdnf clean all
 
 USER 1001
 
@@ -83,11 +70,6 @@ RUN if [ "$ENABLE_FIPS_POLICY" = "true" ]; then \
     else \
         echo "FIPS crypto policy not enabled (set ENABLE_FIPS_POLICY=true to enable)"; \
     fi
-
-# Copy MariaDB shared libraries from builder if needed
-# Note: We copy instead of installing to avoid needing yum in the minimal image
-COPY --from=builder /usr/lib64/libmariadb.so* /usr/lib64/
-RUN rm -f /usr/lib64/libmariadb.so.stub
 
 # Upgrade system pip to eliminate base image CVEs
 RUN pip install --no-cache-dir --upgrade pip==26.1.1 && rm -rf /root/.cache
