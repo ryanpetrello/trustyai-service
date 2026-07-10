@@ -4,7 +4,7 @@ import math
 
 import narwhals.stable.v2 as nw
 import numpy as np
-import polars as pl
+import pandas as pd
 import pytest
 from pydantic import ValidationError
 
@@ -25,21 +25,21 @@ class TestCalculateBatchMeanMetric:
     def test_correct_mean(self) -> None:
         """Mean of [2, 4, 6, 8, 10] is 6.0."""
         df = nw.from_native(
-            pl.DataFrame({"col": [2.0, 4.0, 6.0, 8.0, 10.0]}), eager_only=True
+            pd.DataFrame({"col": [2.0, 4.0, 6.0, 8.0, 10.0]}), eager_only=True
         )
         result = calculate_batch_mean_metric(df, _request())
         assert result.get_value() == 6.0  # noqa: PLR2004
 
     def test_single_value(self) -> None:
         """Mean of a single value is that value."""
-        df = nw.from_native(pl.DataFrame({"col": [42.0]}), eager_only=True)
+        df = nw.from_native(pd.DataFrame({"col": [42.0]}), eager_only=True)
         result = calculate_batch_mean_metric(df, _request())
         assert result.get_value() == 42.0  # noqa: PLR2004
 
     def test_negative_values(self) -> None:
         """Mean of symmetric negatives and positives is 0.0."""
         df = nw.from_native(
-            pl.DataFrame({"col": [-3.0, -1.0, 1.0, 3.0]}), eager_only=True
+            pd.DataFrame({"col": [-3.0, -1.0, 1.0, 3.0]}), eager_only=True
         )
         result = calculate_batch_mean_metric(df, _request())
         assert result.get_value() == 0.0
@@ -47,7 +47,7 @@ class TestCalculateBatchMeanMetric:
     def test_skips_nan_values(self) -> None:
         """NaN values are filtered before computing the mean."""
         df = nw.from_native(
-            pl.DataFrame({"col": [1.0, float("nan"), 3.0, float("nan"), 5.0]}),
+            pd.DataFrame({"col": [1.0, float("nan"), 3.0, float("nan"), 5.0]}),
             eager_only=True,
         )
         result = calculate_batch_mean_metric(df, _request())
@@ -56,14 +56,14 @@ class TestCalculateBatchMeanMetric:
     def test_all_nan_returns_nan(self) -> None:
         """All-NaN column returns NaN."""
         df = nw.from_native(
-            pl.DataFrame({"col": [float("nan"), float("nan")]}), eager_only=True
+            pd.DataFrame({"col": [float("nan"), float("nan")]}), eager_only=True
         )
         result = calculate_batch_mean_metric(df, _request())
         assert math.isnan(result.get_value())
 
     def test_missing_column_raises(self) -> None:
         """Requesting a non-existent column raises ValueError."""
-        df = nw.from_native(pl.DataFrame({"other": [1.0, 2.0]}), eager_only=True)
+        df = nw.from_native(pd.DataFrame({"other": [1.0, 2.0]}), eager_only=True)
         with pytest.raises(ValueError, match="not found"):
             calculate_batch_mean_metric(df, _request("nonexistent"))
 
@@ -71,19 +71,19 @@ class TestCalculateBatchMeanMetric:
         """Large batch mean matches numpy reference value."""
         rng = np.random.default_rng(42)
         values = rng.standard_normal(10_000)
-        df = nw.from_native(pl.DataFrame({"col": values}), eager_only=True)
+        df = nw.from_native(pd.DataFrame({"col": values}), eager_only=True)
         result = calculate_batch_mean_metric(df, _request())
         assert result.get_value() == pytest.approx(np.mean(values), abs=1e-10)
 
     def test_integer_column(self) -> None:
         """Integer columns are handled correctly."""
-        df = nw.from_native(pl.DataFrame({"col": [1, 2, 3, 4, 5]}), eager_only=True)
+        df = nw.from_native(pd.DataFrame({"col": [1, 2, 3, 4, 5]}), eager_only=True)
         result = calculate_batch_mean_metric(df, _request())
         assert result.get_value() == 3.0  # noqa: PLR2004
 
     def test_string_column_raises(self) -> None:
         """String columns raise TypeError with descriptive message."""
-        df = nw.from_native(pl.DataFrame({"col": ["a", "b", "c"]}), eager_only=True)
+        df = nw.from_native(pd.DataFrame({"col": ["a", "b", "c"]}), eager_only=True)
         with pytest.raises(TypeError, match="non-numeric"):
             calculate_batch_mean_metric(df, _request())
 

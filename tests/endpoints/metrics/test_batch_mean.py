@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import narwhals.stable.v2 as nw
 import numpy as np
-import polars as pl
+import pandas as pd
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -24,7 +24,7 @@ def _make_dataframe(n: int = 100, seed: int = 42) -> nw.DataFrame:
     """Create a reproducible test dataframe with numeric columns."""
     rng = np.random.default_rng(seed)
     return nw.from_native(
-        pl.DataFrame(
+        pd.DataFrame(
             {
                 "feature1": rng.standard_normal(n),
                 "feature2": rng.uniform(0, 10, n),
@@ -71,7 +71,7 @@ class TestBatchMeanCompute:
     def test_compute_correct_mean(self, mock_ds: MagicMock) -> None:
         """Mean of [2, 4, 6, 8, 10] is 6.0."""
         df = nw.from_native(
-            pl.DataFrame({"col": [2.0, 4.0, 6.0, 8.0, 10.0]}), eager_only=True
+            pd.DataFrame({"col": [2.0, 4.0, 6.0, 8.0, 10.0]}), eager_only=True
         )
         mock_data_source = MagicMock()
         mock_data_source.get_organic_dataframe = AsyncMock(return_value=df)
@@ -87,7 +87,7 @@ class TestBatchMeanCompute:
     @patch(f"{MODULE}.get_data_source")
     def test_compute_with_thresholds_inside(self, mock_ds: MagicMock) -> None:
         """Value within threshold bounds reports outsideBounds=False."""
-        df = nw.from_native(pl.DataFrame({"col": [5.0, 5.0, 5.0]}), eager_only=True)
+        df = nw.from_native(pd.DataFrame({"col": [5.0, 5.0, 5.0]}), eager_only=True)
         mock_data_source = MagicMock()
         mock_data_source.get_organic_dataframe = AsyncMock(return_value=df)
         mock_ds.return_value = mock_data_source
@@ -107,7 +107,7 @@ class TestBatchMeanCompute:
     @patch(f"{MODULE}.get_data_source")
     def test_compute_with_thresholds_outside(self, mock_ds: MagicMock) -> None:
         """Value outside threshold bounds reports outsideBounds=True."""
-        df = nw.from_native(pl.DataFrame({"col": [100.0, 100.0]}), eager_only=True)
+        df = nw.from_native(pd.DataFrame({"col": [100.0, 100.0]}), eager_only=True)
         mock_data_source = MagicMock()
         mock_data_source.get_organic_dataframe = AsyncMock(return_value=df)
         mock_ds.return_value = mock_data_source
@@ -141,7 +141,7 @@ class TestBatchMeanCompute:
         """Empty dataframe returns 404."""
         mock_data_source = MagicMock()
         mock_data_source.get_organic_dataframe = AsyncMock(
-            return_value=nw.from_native(pl.DataFrame(), eager_only=True)
+            return_value=nw.from_native(pd.DataFrame(), eager_only=True)
         )
         mock_ds.return_value = mock_data_source
 
@@ -151,7 +151,7 @@ class TestBatchMeanCompute:
     @patch(f"{MODULE}.get_data_source")
     def test_compute_missing_column_raises(self, mock_ds: MagicMock) -> None:
         """Requesting a non-existent column raises ValueError."""
-        df = nw.from_native(pl.DataFrame({"other_col": [1.0, 2.0]}), eager_only=True)
+        df = nw.from_native(pd.DataFrame({"other_col": [1.0, 2.0]}), eager_only=True)
         mock_data_source = MagicMock()
         mock_data_source.get_organic_dataframe = AsyncMock(return_value=df)
         mock_ds.return_value = mock_data_source
@@ -309,7 +309,7 @@ class TestDeprecatedIdentityEndpoints:
     def test_deprecated_compute(self, mock_ds: MagicMock) -> None:
         """Deprecated compute forwards to BatchMean and returns correct value."""
         df = nw.from_native(
-            pl.DataFrame({"feature1": [1.0, 2.0, 3.0]}), eager_only=True
+            pd.DataFrame({"feature1": [1.0, 2.0, 3.0]}), eager_only=True
         )
         mock_data_source = MagicMock()
         mock_data_source.get_organic_dataframe = AsyncMock(return_value=df)

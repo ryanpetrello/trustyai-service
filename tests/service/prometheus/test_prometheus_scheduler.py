@@ -5,7 +5,7 @@ import uuid
 from unittest.mock import AsyncMock, Mock, patch
 
 import narwhals.stable.v2 as nw
-import polars as pl
+import pandas as pd
 import pytest
 from prometheus_client import CollectorRegistry, generate_latest
 
@@ -80,7 +80,7 @@ class TestPrometheusScheduler:
         mock.has_recorded_inferences = AsyncMock(return_value=True)
         mock.get_organic_dataframe = AsyncMock(
             return_value=nw.from_native(
-                pl.DataFrame({"feature": [1, 2, 3], "target": [0, 1, 0]}),
+                pd.DataFrame({"feature": [1, 2, 3], "target": [0, 1, 0]}),
                 eager_only=True,
             ),
         )

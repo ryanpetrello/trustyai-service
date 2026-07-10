@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import narwhals.stable.v2 as nw
 import numpy as np
-import polars as pl
+import pandas as pd
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -112,7 +112,7 @@ class TestCompareMeansEndpoints:
         cur_b = rng.normal(0.5, 1, 100)  # Larger mean shift, same variance
 
         reference_df = nw.from_native(
-            pl.DataFrame(
+            pd.DataFrame(
                 {
                     "featureA": ref_a,
                     "featureB": ref_b,
@@ -121,7 +121,7 @@ class TestCompareMeansEndpoints:
             eager_only=True,
         )
         current_df = nw.from_native(
-            pl.DataFrame(
+            pd.DataFrame(
                 {
                     "featureA": cur_a,
                     "featureB": cur_b,
@@ -207,10 +207,10 @@ class TestCompareMeansEndpoints:
         )  # Large shift, same variance -> low p-value
 
         reference_df = nw.from_native(
-            pl.DataFrame({"featureA": ref_a, "featureB": ref_b}), eager_only=True
+            pd.DataFrame({"featureA": ref_a, "featureB": ref_b}), eager_only=True
         )
         current_df = nw.from_native(
-            pl.DataFrame({"featureA": cur_a, "featureB": cur_b}), eager_only=True
+            pd.DataFrame({"featureA": cur_a, "featureB": cur_b}), eager_only=True
         )
 
         with patch(
@@ -523,7 +523,7 @@ class TestCompareMeansEndpoints:
         """
         # Create sample dataframes
         sample_df = nw.from_native(
-            pl.DataFrame(
+            pd.DataFrame(
                 {
                     "feature1": [1.0, 2.0, 3.0, 4.0, 5.0],
                     "feature2": [10.0, 20.0, 30.0, 40.0, 50.0],

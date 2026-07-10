@@ -29,7 +29,7 @@ from uuid import uuid4
 
 import narwhals.stable.v2 as nw
 import numpy as np
-import polars as pl
+import pandas as pd
 from fastapi.testclient import TestClient
 from prometheus_client import CollectorRegistry
 
@@ -756,13 +756,13 @@ def make_compute_empty_reference_data_test(
         mock_data_source = MagicMock()
 
         # Return empty DataFrame for reference data
-        empty_df = nw.from_native(pl.DataFrame(), eager_only=True)
+        empty_df = nw.from_native(pd.DataFrame(), eager_only=True)
         mock_data_source.get_dataframe_by_tag = AsyncMock(return_value=empty_df)
 
         # Return non-empty DataFrame for current data (won't be reached)
         mock_data_source.get_organic_dataframe = AsyncMock(
             return_value=nw.from_native(
-                pl.DataFrame({"feature1": [1.0, 2.0, 3.0]}), eager_only=True
+                pd.DataFrame({"feature1": [1.0, 2.0, 3.0]}), eager_only=True
             ),
         )
         mock_data_source.get_dataframe = AsyncMock(return_value=empty_df)
@@ -813,12 +813,12 @@ def make_compute_empty_current_data_test(
 
         # Return non-empty DataFrame for reference data
         reference_df = nw.from_native(
-            pl.DataFrame({"feature1": [1.0, 2.0, 3.0]}), eager_only=True
+            pd.DataFrame({"feature1": [1.0, 2.0, 3.0]}), eager_only=True
         )
         mock_data_source.get_dataframe_by_tag = AsyncMock(return_value=reference_df)
 
         # Return empty DataFrame for current data
-        empty_df = nw.from_native(pl.DataFrame(), eager_only=True)
+        empty_df = nw.from_native(pd.DataFrame(), eager_only=True)
         mock_data_source.get_organic_dataframe = AsyncMock(return_value=empty_df)
         mock_data_source.get_dataframe = AsyncMock(return_value=empty_df)
 
@@ -1234,7 +1234,7 @@ def _create_sample_dataframe(
     """
     rng = np.random.default_rng()
     data = {col: rng.standard_normal(n_samples) for col in columns}
-    return nw.from_native(pl.DataFrame(data), eager_only=True)
+    return nw.from_native(pd.DataFrame(data), eager_only=True)
 
 
 # ============================================================================
